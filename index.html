@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabian Sena Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+font-family: 'Poppins', sans-serif;
+background-color: #0f0f0f;
+color: #f5f5f5;
+margin: 0;
+padding: 20px;
+transition: background 0.3s;
+}
+h1 {
+text-align: center;
+font-size: 32px;
+margin-bottom: 10px;
+background: linear-gradient(90deg, #FFD700, #FFB700);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+letter-spacing: 1px;
+text-shadow: 0 0 4px rgba(0,0,0,0.6);
+}
+#progress-bar-container {
+width: 100%;
+background: #1c1c1c;
+border-radius: 12px;
+overflow: hidden;
+height: 14px;
+margin-bottom: 20px;
+}
+#progress-bar {
+width: 0%;
+height: 100%;
+background: #FFD700;
+transition: width 0.3s ease;
+}
+
+#tabs {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+gap: 15px;
+}
+.tab {
+padding: 8px 16px;
+border-radius: 12px;
+cursor: pointer;
+background: #1c1c1c;
+font-weight: bold;
+transition: 0.3s;
+}
+.tab.active {
+background: #ffcc00;
+color: black;
+}
+
+#calendar {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 8px;
+margin-bottom: 15px;
+}
+.day {
+padding: 10px 5px;
+background: #1c1c1c;
+border-radius: 12px;
+cursor: pointer;
+text-align: center;
+font-weight: bold;
+transition: 0.3s, transform 0.2s, box-shadow 0.2s;
+word-wrap: break-word;
+}
+.day.active { background: #ffcc00; color: black; }
+.day.today { border: 2px solid #ffcc00; }
+.day:hover { transform: scale(1.05); box-shadow: 0 6px 12px rgba(255,204,0,0.5); }
+
+#workout-container, #nutrition-container {
+display: flex;
+flex-direction: column;
+gap: 12px;
+max-width: 100%;
+margin: 0 auto;
+padding: 0 5px;
+overflow: hidden;
+min-height: 50px;
+}
+.exercise {
+background: #1c1c1c;
+padding: 14px 18px;
+border-radius: 12px;
+display: flex;
+flex-direction: column;
+font-size: 16px;
+box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+transition: 0.3s all, transform 0.4s, opacity 0.4s;
+opacity: 0;
+transform: translateX(-30px);
+}
+.exercise.slide-in {
+opacity: 1;
+transform: translateX(0);
+}
+.exercise.completed {
+transform: translateX(5px);
+opacity: 0.5;
+background: #111;
+}
+.header {
+display: flex;
+align-items: center;
+margin-bottom: 6px;
+}
+.checkbox { margin-right: 12px; width: 24px; height: 24px; accent-color: #ffcc00; cursor:pointer; }
+.comment {
+background: #111;
+border: 1px solid #333;
+border-radius: 8px;
+padding: 8px;
+color: #f5f5f5;
+resize: vertical;
+transition: 0.2s;
+}
+.exercise.main strong { color: #FFD700; }
+.exercise.sculpt strong { color: #C0C0C0; }
+.exercise.optional strong { color: #CD7F32; }
+
+@media screen and (max-width: 600px) { #calendar { grid-template-columns: repeat(2, 1fr); } }
+@media screen and (max-width: 400px) { h1{font-size:22px;} .exercise{font-size:14px;} }
+</style>
+</head>
+<body>
+
+<h1>Fabian Sena Tracker</h1>
+<div id="progress-bar-container"><div id="progress-bar"></div></div>
+
+<div id="tabs">
+<div class="tab active" data-tab="workout">Workout</div>
+<div class="tab" data-tab="nutrition">Nutrition</div>
+</div>
+
+<div id="calendar"></div>
+<div id="workout-container"></div>
+<div id="nutrition-container" style="display:none;">
+<textarea placeholder="Add your nutrition plan here..." style="width:100%;height:200px;background:#111;color:#f5f5f5;padding:10px;border-radius:10px;border:1px solid #333;"></textarea>
+</div>
+
+<script>
+// Tabs
+const tabs = document.querySelectorAll(".tab");
+const workoutContainer = document.getElementById("workout-container");
+const nutritionContainer = document.getElementById("nutrition-container");
+tabs.forEach(tab=>{
+tab.addEventListener("click",()=>{
+tabs.forEach(t=>t.classList.remove("active"));
+tab.classList.add("active");
+workoutContainer.style.display = tab.dataset.tab==="workout" ? "flex" : "none";
+nutritionContainer.style.display = tab.dataset.tab==="nutrition" ? "block" : "none";
+});
+});
+
+// Workout plan
+const plan = [
+{ day:"Monday", exercises:[{name:"Incline DB Press", sets:"3x8"},{name:"Neutral Pull-ups", sets:"3x8"},{name:"Cable Fly", sets:"3x12"},{name:"Face Pull", sets:"3x15"},{name:"Lateral Raise", sets:"3x12"},{name:"Cable Punch", sets:"3x12"},{name:"Lateral Raises (2–3kg)", sets:"60 sec"},{name:"Front Raises", sets:"60 sec"},{name:"Lateral (top half)", sets:"60 sec"},{name:"Arm Circles", sets:"45 sec"},{name:"Hanging Leg Raise", sets:"3x12"},{name:"Vacuum", sets:"3x30 sec"}]},
+{ day:"Tuesday", exercises:[{name:"Bulgarian Split Squat", sets:"3x8"},{name:"Leg Press (feet neutral)", sets:"3x10"},{name:"Walking Lunges", sets:"2x20 steps"},{name:"Leg Curl", sets:"3x12"},{name:"Standing Calf Raise", sets:"4x12"},{name:"Seated Calf Raise", sets:"3x15"},{name:"Dead Bug", sets:"3x12"},{name:"Reverse Crunch", sets:"3x15"}]},
+{ day:"Wednesday", exercises:[{name:"Hip Flexor Stretch", sets:"2 min each"},{name:"Hamstrings Stretch", sets:"2 min"},{name:"Pigeon Stretch", sets:"2 min"},{name:"Hollow Hold", sets:"3x30 sec"},{name:"Plank (posterior tilt)", sets:"3x30 sec"},{name:"Vacuum", sets:"5 min"},{name:"Lateral Raises (2–3kg)", sets:"60 sec"},{name:"Front Raises", sets:"60 sec"},{name:"Lateral (top half)", sets:"60 sec"},{name:"Arm Circles", sets:"45 sec"},{name:"Incline Walk", sets:"15–20 min"}]},
+{ day:"Thursday", exercises:[{name:"Wide Pulldown - 60kg", sets:"3x10"},{name:"Single-arm Cable Row - 40kg", sets:"3x12"},{name:"Cable Reverse Fly - 7.5kg", sets:"3x15"},{name:"Incline Push-ups", sets:"2x20"},{name:"Lateral Raises (2–3kg)", sets:"60 sec"},{name:"Front Raises", sets:"60 sec"},{name:"Lateral (top half)", sets:"60 sec"},{name:"Arm Circles", sets:"45 sec"},{name:"Abs Circuit", sets:""}]},
+{ day:"Friday", exercises:[{name:"Bodyweight Squat", sets:"4x20"},{name:"Push-ups", sets:"4x15"},{name:"Hanging Knee Raises", sets:"4x12"},{name:"High Knees", sets:"4x80"},{name:"Lateral Raises (2–3kg)", sets:"60 sec"},{name:"Front Raises", sets:"60 sec"},{name:"Lateral (top half)", sets:"60 sec"},{name:"Arm Circles", sets:"45 sec"},{name:"Lateral Raises (light)", sets:"60 sec"},{name:"Biceps Curls (light)", sets:"60 sec"}]},
+{ day:"Saturday", exercises:[{name:"Light Shoulders Circuit", sets:""},{name:"Light Arms Circuit", sets:""},{name:"Abs", sets:""},{name:"20 min Walk", sets:""}]},
+{ day:"Sunday", exercises:[]}
+];
+
+// Calendar
+const calendar = document.getElementById("calendar");
+let savedProgress = JSON.parse(localStorage.getItem("calendarProgress")) || {};
+let activeDateKey = "";
+
+// week dates
+function getWeekDates(){
+const now = new Date();
+const day = now.getDay();
+const monday = new Date(now);
+monday.setDate(now.getDate() - (day==0?6:day-1));
+let dates=[];
+for(let i=0;i<7;i++){
+const d=new Date(monday);
+d.setDate(monday.getDate()+i);
+dates.push(d);
+}
+return dates;
+}
+const weekDates = getWeekDates();
+weekDates.forEach((date,i)=>{
+const dayDiv=document.createElement("div");
+dayDiv.className="day";
+const dd=date.getDate();
+const mm=date.getMonth()+1;
+dayDiv.innerText=`${plan[i].day}\n${dd}/${mm}`;
+if(new Date().toDateString()===date.toDateString()) dayDiv.classList.add("today");
+dayDiv.addEventListener("click",()=>{ activeDateKey=date.toDateString(); selectDay(i); });
+calendar.appendChild(dayDiv);
+});
+
+// --- Progress bar ---
+const progressBar = document.getElementById("progress-bar");
+function updateProgressBar(){
+const exercises = plan[selectedIndex].exercises;
+let completed = 0;
+exercises.forEach((ex,j)=>{
+if(savedProgress[`${weekDates[selectedIndex].toDateString()}-ex${j}`]?.checked) completed++;
+});
+const percent = exercises.length ? (completed/exercises.length)*100 : 0;
+progressBar.style.width = percent+"%";
+}
+
+// --- Render exercises with slide-in ---
+let selectedIndex=0;
+function selectDay(index){
+selectedIndex=index;
+document.querySelectorAll(".day").forEach((d,i)=>d.classList.toggle("active", i===index));
+workoutContainer.innerHTML="";
+const exercises = plan[index].exercises;
+exercises.forEach((ex,i)=>{
+const div = document.createElement("div");
+div.className="exercise";
+if(i<6) div.classList.add("main");
+else if(i<12) div.classList.add("sculpt");
+else div.classList.add("optional");
+
+const id = `${weekDates[index].toDateString()}-ex${i}`;
+const checked = savedProgress[id]?.checked ? "checked" : "";
+const commentText = savedProgress[id]?.comment || "";
+if(checked) div.classList.add("completed");
+div.innerHTML = `
+<div class="header">
+<input type="checkbox" class="checkbox" id="${id}" ${checked}>
+<strong>${ex.name}</strong> ${ex.sets}
+</div>
+<textarea class="comment" placeholder="Add comments..." id="comment-${id}">${commentText}</textarea>
+`;
+workoutContainer.appendChild(div);
+setTimeout(()=>div.classList.add("slide-in"), i*50);
+
+const checkbox = document.getElementById(id);
+const comment = document.getElementById(`comment-${id}`);
+checkbox.addEventListener("change", ()=>{
+if(!savedProgress[id]) savedProgress[id]={};
+savedProgress[id].checked = checkbox.checked;
+localStorage.setItem("calendarProgress", JSON.stringify(savedProgress));
+div.classList.toggle("completed", checkbox.checked);
+updateCalendarHeatmap();
+updateProgressBar();
+});
+comment.addEventListener("input", ()=>{
+if(!savedProgress[id]) savedProgress[id]={};
+savedProgress[id].comment = comment.value;
+localStorage.setItem("calendarProgress", JSON.stringify(savedProgress));
+});
+});
+updateCalendarHeatmap();
+updateProgressBar();
+}
+
+// --- Calendar heatmap ---
+function updateCalendarHeatmap(){
+document.querySelectorAll(".day").forEach((d,i)=>{
+const dateKey = weekDates[i].toDateString();
+const exercises = plan[i].exercises;
+let completed = 0;
+exercises.forEach((ex,j)=>{
+if(savedProgress[`${dateKey}-ex${j}`]?.checked) completed++;
+});
+const ratio = exercises.length ? completed/exercises.length : 0;
+const hue = 50 - ratio*50;
+d.style.backgroundColor = ratio>0 ? `hsl(${hue},80%,30%)` : "#1c1c1c";
+if(d.classList.contains("active")) d.style.backgroundColor="#ffcc00";
+});
+}
+
+// --- Swipe for mobile ---
+let touchStartX=0;
+workoutContainer.addEventListener("touchstart", e=>{ touchStartX=e.changedTouches[0].screenX; });
+workoutContainer.addEventListener("touchend", e=>{
+const deltaX=e.changedTouches[0].screenX - touchStartX;
+if(deltaX>50 && selectedIndex>0) selectDay(selectedIndex-1);
+else if(deltaX<-50 && selectedIndex<6) selectDay(selectedIndex+1);
+});
+
+// --- Mouse drag for desktop ---
+let dragStartX=0;
+workoutContainer.addEventListener("mousedown", e=>{ dragStartX=e.screenX; });
+workoutContainer.addEventListener("mouseup", e=>{
+const deltaX=e.screenX - dragStartX;
+if(deltaX>50 && selectedIndex>0) selectDay(selectedIndex-1);
+else if(deltaX<-50 && selectedIndex<6) selectDay(selectedIndex+1);
+});
+
+// Select today initially
+const todayIndex = weekDates.findIndex(d=>new Date().toDateString()===d.toDateString());
+activeDateKey = weekDates[todayIndex].toDateString();
+selectDay(todayIndex);
+</script>
+</body>
+</html>
